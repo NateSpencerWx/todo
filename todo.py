@@ -169,8 +169,8 @@ def _select_list_from_prefix(args, current_path):
 		return matches[0], args[1:]
 	print("Multiple lists found:")
 	for idx, path in enumerate(matches, 1):
-		print("[{}] {}".format(idx, os.path.basename(path)))
-	default_sel = min(DEFAULT_SELECTION, len(matches))
+		print("[{}] {}".format(idx, os.path.basename(path)[:-4]))
+	default_sel = DEFAULT_SELECTION
 	try:
 		choice = input("Select list [1-{}] (default {}): ".format(len(matches), default_sel)).strip()
 		sel = int(choice) if choice else default_sel

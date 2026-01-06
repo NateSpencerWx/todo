@@ -120,7 +120,9 @@ Sometimes you might want to change the wording of a task.  You can use
 `todo` is for people that want to *do* tasks, not organize them. With that said,
 sometimes it's useful to be able to have at least *one* level of organization.
 To split up your tasks into different lists you can use the built-in `--task`
-flag, which saves separate lists inside the `data` directory next to `todo.py`:
+flag, which saves separate lists inside the `data` directory next to `todo.py`.
+The last list you used becomes the default, so you only need to specify `--task`
+when switching lists:
 
     $ todo --task groceries Buy milk
     $ todo --task work Finish report

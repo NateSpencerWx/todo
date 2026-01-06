@@ -220,6 +220,15 @@ def _create_new_list(list_name):
 	print(f"Created new list: {safe_name}")
 	return new_path
 
+def _get_list_files(data_dir):
+	"""Get list of .txt files (excluding hidden files) in the data directory."""
+	try:
+		if os.path.isdir(data_dir):
+			return [f for f in os.listdir(data_dir) if f.endswith(".txt") and not f.startswith(".")]
+	except OSError:
+		pass
+	return []
+
 def _delete_list(list_name):
 	"""Delete a list."""
 	safe_name = _sanitize_list_name(list_name)
@@ -231,36 +240,30 @@ def _delete_list(list_name):
 	
 	# Check if there are other lists - prevent deleting the only list
 	data_dir = os.path.join(script_dir, "data")
-	try:
-		if os.path.isdir(data_dir):
-			txt_files = [f for f in os.listdir(data_dir) if f.endswith(".txt") and not f.startswith(".")]
-			if len(txt_files) <= 1:
-				print(f"Cannot delete '{safe_name}': it's the only list.")
-				return False
-	except OSError:
-		pass
+	txt_files = _get_list_files(data_dir)
+	if len(txt_files) <= 1:
+		print(f"Cannot delete '{safe_name}': it's the only list.")
+		return False
 	
 	try:
+		# Check if we're deleting the current list before deletion
+		current = _read_current_path()
+		is_current = (current == list_path)
+		
 		os.remove(list_path)
 		print(f"Deleted list: {safe_name}")
 		
 		# If the deleted list was the current list, switch to another list
-		current = _read_current_path()
-		if current == list_path:
+		if is_current:
 			# Find another existing list to switch to
 			if os.path.exists(default_file_path):
 				_write_current_path(default_file_path)
 			else:
 				# Find any remaining list
-				try:
-					if os.path.isdir(data_dir):
-						for name in sorted(os.listdir(data_dir)):
-							if name.endswith(".txt") and not name.startswith("."):
-								other_list = os.path.join(data_dir, name)
-								_write_current_path(other_list)
-								break
-				except OSError:
-					pass
+				for name in sorted(_get_list_files(data_dir)):
+					other_list = os.path.join(data_dir, name)
+					_write_current_path(other_list)
+					break
 		
 		return True
 	except OSError as e:

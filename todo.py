@@ -96,7 +96,9 @@ class TodoService(object):
 			sanitized_task = task.replace('\n', ' ').replace('\r', ' ')
 			self.tasks[id] = sanitized_task
 
-	def print_all_tasks(self):
+	def print_all_tasks(self, list_name=None):
+		if list_name:
+			print(f"List: {list_name}")
 		asciiTable = ASCIITable(["ID", "Task"])
 		for task_id in sorted(self.tasks.keys()):
 			task = self.tasks[task_id]
@@ -180,7 +182,60 @@ def _select_list_from_prefix(args, current_path):
 		sel = default_sel
 	return matches[sel - 1], args[1:]
 
+def _get_list_name_from_path(path):
+	"""Extract the list name from a file path."""
+	return os.path.basename(path)[:-4] if path.endswith('.txt') else os.path.basename(path)
+
+def _list_all_lists():
+	"""List all available task lists."""
+	data_dir = os.path.join(script_dir, "data")
+	if not os.path.isdir(data_dir):
+		print("No lists found.")
+		return
+	lists = []
+	try:
+		for name in os.listdir(data_dir):
+			if name.endswith(".txt") and not name.startswith("."):
+				lists.append(name[:-4])
+	except OSError:
+		print("Error reading lists directory.")
+		return
+	if not lists:
+		print("No lists found.")
+	else:
+		print("Available lists:")
+		for list_name in sorted(lists):
+			print(f"  {list_name}")
+
+def _create_new_list(list_name):
+	"""Create a new empty list."""
+	safe_name = _sanitize_list_name(list_name)
+	if not safe_name:
+		print("Error: Invalid list name.")
+		return None
+	new_path = os.path.join(script_dir, "data", f"{safe_name}.txt")
+	if os.path.exists(new_path):
+		print(f"List '{safe_name}' already exists.")
+		return new_path
+	# Create the list by instantiating TodoService (will create file on close)
+	todo_service = TodoService(new_path)
+	todo_service.close()
+	print(f"Created new list: {safe_name}")
+	return new_path
+
 arguments = sys.argv[1:]
+
+# Handle --list-all / -l flag to show all lists
+if len(arguments) > 0 and arguments[0] in ("--list-all", "-l"):
+	_list_all_lists()
+	sys.exit(0)
+
+# Handle --new-list flag to create a new list
+if len(arguments) >= 2 and arguments[0] == "--new-list":
+	new_list_path = _create_new_list(arguments[1])
+	if new_list_path:
+		_write_current_path(new_list_path)
+	sys.exit(0)
 
 saved_path = _read_current_path()
 filePath = saved_path or default_file_path
@@ -198,13 +253,17 @@ filePath, arguments = _select_list_from_prefix(arguments, filePath)
 if filePath != saved_path:
 	_write_current_path(filePath)
 
+# Get the list name for display
+list_name = _get_list_name_from_path(filePath)
+
 todo = TodoService(filePath)
 
 if len(arguments) == 0:
-	todo.print_all_tasks()
+	todo.print_all_tasks(list_name)
 elif len(arguments) >= 2 and arguments[0] == "-f":
 	todo.remove_tasks(list(map(lambda x: int(x), arguments[1:])))
 elif len(arguments) >= 3 and arguments[0] == "-e":
+	print(f"List: {list_name}")
 	todo.edit_task(int(arguments[1]), " ".join(arguments[2:]))
 else:
 	# Strip leading dash from first argument if present (for adding items)

@@ -113,7 +113,9 @@ class TodoService(object):
 # Get the directory where the script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Default file path: data/tasks.txt in the same directory as the script
-default_file_path = os.path.join(script_dir, "data", "tasks.txt")
+DEFAULT_LIST_NAME = "tasks"
+DEFAULT_SELECTION = 1
+default_file_path = os.path.join(script_dir, "data", f"{DEFAULT_LIST_NAME}.txt")
 current_path_file = os.path.join(script_dir, "data", ".current")
 
 def _read_current_path():
@@ -137,7 +139,7 @@ def _write_current_path(path):
 
 def _sanitize_list_name(name):
 	safe = "".join([c for c in name.strip() if c.isalnum() or c in ('-', '_')])
-	return safe or "tasks"
+	return safe or DEFAULT_LIST_NAME
 
 def _matching_list_paths(prefix):
 	data_dir = os.path.join(script_dir, "data")
@@ -167,12 +169,12 @@ def _select_list_from_prefix(args, current_path):
 	for idx, path in enumerate(matches, 1):
 		print("[{}] {}".format(idx, os.path.basename(path)))
 	try:
-		choice = input("Select list [1-{}] (default 1): ".format(len(matches))).strip()
-		sel = int(choice) if choice else 1
+		choice = input("Select list [1-{}] (default {}): ".format(len(matches), DEFAULT_SELECTION)).strip()
+		sel = int(choice) if choice else DEFAULT_SELECTION
 		if sel < 1 or sel > len(matches):
-			sel = 1
+			sel = DEFAULT_SELECTION
 	except (ValueError, EOFError):
-		sel = 1
+		sel = DEFAULT_SELECTION
 	return matches[sel - 1], args[1:]
 
 arguments = sys.argv[1:]
@@ -184,9 +186,7 @@ while len(arguments) >= 2 and arguments[0] in ("--location", "--task"):
 		filePath = arguments[1]
 	elif arguments[0] == '--task':
 		task_name = arguments[1].strip()
-		safe_task_name = "".join([c for c in task_name if c.isalnum() or c in ('-', '_')])
-		if safe_task_name == '':
-			safe_task_name = "tasks"
+		safe_task_name = _sanitize_list_name(task_name)
 		filePath = os.path.join(script_dir, "data", "{}.txt".format(safe_task_name))
 	arguments = arguments[2:]
 

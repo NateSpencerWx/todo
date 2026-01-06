@@ -122,7 +122,7 @@ def _read_current_path():
 	try:
 		if os.path.exists(current_path_file):
 			with open(current_path_file, 'r', encoding='utf-8') as f:
-				return f.read().strip() or None
+				return f.read().strip()
 	except OSError:
 		pass
 	return None
@@ -170,14 +170,14 @@ def _select_list_from_prefix(args, current_path):
 	print("Multiple lists found:")
 	for idx, path in enumerate(matches, 1):
 		print("[{}] {}".format(idx, os.path.basename(path)))
+	default_sel = min(DEFAULT_SELECTION, len(matches))
 	try:
-		default_sel = min(DEFAULT_SELECTION, len(matches))
 		choice = input("Select list [1-{}] (default {}): ".format(len(matches), default_sel)).strip()
 		sel = int(choice) if choice else default_sel
 		if sel < 1 or sel > len(matches):
 			sel = default_sel
 	except (ValueError, EOFError):
-		sel = min(DEFAULT_SELECTION, len(matches))
+		sel = default_sel
 	return matches[sel - 1], args[1:]
 
 arguments = sys.argv[1:]

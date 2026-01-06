@@ -207,6 +207,10 @@ elif len(arguments) >= 2 and arguments[0] == "-f":
 elif len(arguments) >= 3 and arguments[0] == "-e":
 	todo.edit_task(int(arguments[1]), " ".join(arguments[2:]))
 else:
-	todo.add_task(" ".join(arguments))
+	# Strip leading dash from first argument if present (for adding items)
+	task_args = arguments[:]
+	if task_args and task_args[0].startswith('-') and len(task_args[0]) > 1:
+		task_args[0] = task_args[0][1:]
+	todo.add_task(" ".join(task_args))
 
 todo.close()

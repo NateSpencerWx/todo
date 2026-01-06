@@ -117,17 +117,23 @@ default_file_path = os.path.join(script_dir, "data", "tasks.txt")
 current_path_file = os.path.join(script_dir, "data", ".current")
 
 def _read_current_path():
-	if os.path.exists(current_path_file):
-		with open(current_path_file, 'r', encoding='utf-8') as f:
-			return f.read().strip() or None
+	try:
+		if os.path.exists(current_path_file):
+			with open(current_path_file, 'r', encoding='utf-8') as f:
+				return f.read().strip() or None
+	except OSError:
+		return None
 	return None
 
 def _write_current_path(path):
-	dir_path = os.path.dirname(current_path_file)
-	if dir_path and not os.path.exists(dir_path):
-		os.makedirs(dir_path)
-	with open(current_path_file, 'w', encoding='utf-8') as f:
-		f.write(path)
+	try:
+		dir_path = os.path.dirname(current_path_file)
+		if dir_path and not os.path.exists(dir_path):
+			os.makedirs(dir_path)
+		with open(current_path_file, 'w', encoding='utf-8') as f:
+			f.write(path)
+	except OSError:
+		pass
 
 arguments = sys.argv[1:]
 

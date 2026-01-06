@@ -122,18 +122,58 @@ def _read_current_path():
 			with open(current_path_file, 'r', encoding='utf-8') as f:
 				return f.read().strip() or None
 	except OSError:
-		return None
+		pass
 	return None
 
 def _write_current_path(path):
 	try:
 		dir_path = os.path.dirname(current_path_file)
-		if dir_path and not os.path.exists(dir_path):
-			os.makedirs(dir_path)
+		if dir_path:
+			os.makedirs(dir_path, exist_ok=True)
 		with open(current_path_file, 'w', encoding='utf-8') as f:
 			f.write(path)
 	except OSError:
 		pass
+
+def _sanitize_list_name(name):
+	safe = "".join([c for c in name.strip() if c.isalnum() or c in ('-', '_')])
+	return safe or "tasks"
+
+def _matching_list_paths(prefix):
+	data_dir = os.path.join(script_dir, "data")
+	matches = []
+	try:
+		for name in os.listdir(data_dir):
+			if not name.endswith(".txt"):
+				continue
+			base = name[:-4]
+			if base.startswith(prefix):
+				matches.append(os.path.join(data_dir, name))
+	except OSError:
+		return []
+	return sorted(matches)
+
+def _select_list_from_prefix(args, current_path):
+	if len(args) == 0 or args[0].startswith('-'):
+		return current_path, args
+	list_name = _sanitize_list_name(args[0])
+	matches = _matching_list_paths(list_name)
+	if len(matches) == 0:
+		new_path = os.path.join(script_dir, "data", "{}.txt".format(list_name))
+		return new_path, args[1:]
+	if len(matches) == 1:
+		return matches[0], args[1:]
+	print("Multiple lists found:")
+	for idx, path in enumerate(matches, 1):
+		print("[{}] {}".format(idx, os.path.basename(path)))
+	try:
+		choice = input("Select list [1-{}] (default 1): ".format(len(matches))).strip()
+		sel = int(choice) if choice else 1
+		if sel < 1 or sel > len(matches):
+			sel = 1
+	except (ValueError, EOFError):
+		sel = 1
+	return matches[sel - 1], args[1:]
 
 arguments = sys.argv[1:]
 
@@ -149,6 +189,8 @@ while len(arguments) >= 2 and arguments[0] in ("--location", "--task"):
 			safe_task_name = "tasks"
 		filePath = os.path.join(script_dir, "data", "{}.txt".format(safe_task_name))
 	arguments = arguments[2:]
+
+filePath, arguments = _select_list_from_prefix(arguments, filePath)
 
 if filePath != saved_path:
 	_write_current_path(filePath)

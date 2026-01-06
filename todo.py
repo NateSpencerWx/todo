@@ -229,27 +229,38 @@ def _delete_list(list_name):
 		print(f"List '{safe_name}' does not exist.")
 		return False
 	
-	# Prevent deleting the default list if it's the only one
-	if safe_name == DEFAULT_LIST_NAME:
-		# Check if there are other lists
-		data_dir = os.path.join(script_dir, "data")
-		try:
-			if os.path.isdir(data_dir):
-				txt_files = [f for f in os.listdir(data_dir) if f.endswith(".txt") and not f.startswith(".")]
-				if len(txt_files) <= 1:
-					print(f"Cannot delete '{safe_name}': it's the only list.")
-					return False
-		except OSError:
-			pass
+	# Check if there are other lists - prevent deleting the only list
+	data_dir = os.path.join(script_dir, "data")
+	try:
+		if os.path.isdir(data_dir):
+			txt_files = [f for f in os.listdir(data_dir) if f.endswith(".txt") and not f.startswith(".")]
+			if len(txt_files) <= 1:
+				print(f"Cannot delete '{safe_name}': it's the only list.")
+				return False
+	except OSError:
+		pass
 	
 	try:
 		os.remove(list_path)
 		print(f"Deleted list: {safe_name}")
 		
-		# If the deleted list was the current list, switch to default
+		# If the deleted list was the current list, switch to another list
 		current = _read_current_path()
 		if current == list_path:
-			_write_current_path(default_file_path)
+			# Find another existing list to switch to
+			if os.path.exists(default_file_path):
+				_write_current_path(default_file_path)
+			else:
+				# Find any remaining list
+				try:
+					if os.path.isdir(data_dir):
+						for name in sorted(os.listdir(data_dir)):
+							if name.endswith(".txt") and not name.startswith("."):
+								other_list = os.path.join(data_dir, name)
+								_write_current_path(other_list)
+								break
+				except OSError:
+					pass
 		
 		return True
 	except OSError as e:

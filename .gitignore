@@ -1,2 +1,6 @@
 # Data directory containing user tasks
 data/
+
+# Python cache
+__pycache__/
+*.pyc

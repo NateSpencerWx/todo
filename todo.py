@@ -210,9 +210,6 @@ def _list_all_lists():
 def _create_new_list(list_name):
 	"""Create a new empty list."""
 	safe_name = _sanitize_list_name(list_name)
-	if not safe_name:
-		print("Error: Invalid list name.")
-		return None
 	new_path = os.path.join(script_dir, "data", f"{safe_name}.txt")
 	if os.path.exists(new_path):
 		print(f"List '{safe_name}' already exists.")
@@ -233,8 +230,7 @@ if len(arguments) > 0 and arguments[0] in ("--list-all", "-l"):
 # Handle --new-list flag to create a new list
 if len(arguments) >= 2 and arguments[0] == "--new-list":
 	new_list_path = _create_new_list(arguments[1])
-	if new_list_path:
-		_write_current_path(new_list_path)
+	_write_current_path(new_list_path)
 	sys.exit(0)
 
 saved_path = _read_current_path()

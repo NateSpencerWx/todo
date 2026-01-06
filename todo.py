@@ -79,7 +79,9 @@ class TodoService(object):
 				f.write("{}|{}\n".format(task_id, self.tasks[task_id]))
 
 	def add_task(self, task):
-		self.tasks[self.next_id] = task
+		# Sanitize newlines from task text to prevent file format corruption
+		sanitized_task = task.replace('\n', ' ').replace('\r', ' ')
+		self.tasks[self.next_id] = sanitized_task
 		self.next_id += 1
 
 	def remove_tasks(self, ids):
@@ -90,7 +92,9 @@ class TodoService(object):
 
 	def edit_task(self, id, task):
 		if id in self.tasks:
-			self.tasks[id] = task
+			# Sanitize newlines from task text to prevent file format corruption
+			sanitized_task = task.replace('\n', ' ').replace('\r', ' ')
+			self.tasks[id] = sanitized_task
 
 	def print_all_tasks(self):
 		asciiTable = ASCIITable(["ID", "Task"])

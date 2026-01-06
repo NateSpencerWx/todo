@@ -169,12 +169,13 @@ def _select_list_from_prefix(args, current_path):
 	for idx, path in enumerate(matches, 1):
 		print("[{}] {}".format(idx, os.path.basename(path)))
 	try:
-		choice = input("Select list [1-{}] (default {}): ".format(len(matches), DEFAULT_SELECTION)).strip()
-		sel = int(choice) if choice else DEFAULT_SELECTION
+		default_sel = min(DEFAULT_SELECTION, len(matches))
+		choice = input("Select list [1-{}] (default {}): ".format(len(matches), default_sel)).strip()
+		sel = int(choice) if choice else default_sel
 		if sel < 1 or sel > len(matches):
-			sel = DEFAULT_SELECTION
+			sel = default_sel
 	except (ValueError, EOFError):
-		sel = DEFAULT_SELECTION
+		sel = min(DEFAULT_SELECTION, len(matches))
 	return matches[sel - 1], args[1:]
 
 arguments = sys.argv[1:]

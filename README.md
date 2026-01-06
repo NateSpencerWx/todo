@@ -119,7 +119,23 @@ Sometimes you might want to change the wording of a task.  You can use
 
 `todo` is for people that want to *do* tasks, not organize them. With that said,
 sometimes it's useful to be able to have at least *one* level of organization.
-To split up your tasks into different lists you can add a few more aliases:
+To split up your tasks into different lists you can use the built-in `--task`
+flag, which saves separate lists inside the `data` directory next to `todo.py`.
+The last list you used becomes the default. You can also pick a list by name
+without flags: the first argument is treated as the list prefix, and if multiple
+lists match you'll be prompted to choose:
+
+    $ todo groceries Buy milk
+    $ todo work Finish report
+    $ todo groceries
+    +----+-----------+
+	| ID |   Task    |
+	+----+-----------+
+	| 1  | Buy milk  |
+	+----+-----------+
+
+If you prefer custom locations you can still point to a specific file with
+`--location`, which overrides the default/sticky list:
 
     alias tg='python ~/path/to/todo.py --location ~/groceries.txt'
     alias tw='python ~/path/to/todo.py --location ~/work.txt'

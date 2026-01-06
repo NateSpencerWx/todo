@@ -113,14 +113,90 @@ class TodoService(object):
 # Get the directory where the script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Default file path: data/tasks.txt in the same directory as the script
-default_file_path = os.path.join(script_dir, "data", "tasks.txt")
+DEFAULT_LIST_NAME = "tasks"
+DEFAULT_SELECTION = 1
+default_file_path = os.path.join(script_dir, "data", f"{DEFAULT_LIST_NAME}.txt")
+current_path_file = os.path.join(script_dir, "data", ".current")
+
+def _read_current_path():
+	try:
+		if os.path.exists(current_path_file):
+			with open(current_path_file, 'r', encoding='utf-8') as f:
+				return f.read().strip()
+	except OSError:
+		pass
+	return None
+
+def _write_current_path(path):
+	try:
+		dir_path = os.path.dirname(current_path_file)
+		if dir_path:
+			os.makedirs(dir_path, exist_ok=True)
+		with open(current_path_file, 'w', encoding='utf-8') as f:
+			f.write(path)
+	except OSError:
+		pass
+
+def _sanitize_list_name(name):
+	safe = "".join([c for c in name.strip() if c.isalnum() or c in ('-', '_')])
+	return safe or DEFAULT_LIST_NAME
+
+def _matching_list_paths(prefix):
+	data_dir = os.path.join(script_dir, "data")
+	matches = []
+	try:
+		if not os.path.isdir(data_dir):
+			return []
+		for name in os.listdir(data_dir):
+			if not name.endswith(".txt"):
+				continue
+			base = name[:-4]
+			if base.startswith(prefix):
+				matches.append(os.path.join(data_dir, name))
+	except OSError:
+		return []
+	return sorted(matches)
+
+def _select_list_from_prefix(args, current_path):
+	if len(args) == 0 or args[0].startswith('-'):
+		return current_path, args
+	list_name = _sanitize_list_name(args[0])
+	matches = _matching_list_paths(list_name)
+	if len(matches) == 0:
+		new_path = os.path.join(script_dir, "data", "{}.txt".format(list_name))
+		return new_path, args[1:]
+	if len(matches) == 1:
+		return matches[0], args[1:]
+	print("Multiple lists found:")
+	for idx, path in enumerate(matches, 1):
+		print("[{}] {}".format(idx, os.path.basename(path)[:-4]))
+	default_sel = DEFAULT_SELECTION
+	try:
+		choice = input("Select list [1-{}] (default {}): ".format(len(matches), default_sel)).strip()
+		sel = int(choice) if choice else default_sel
+		if sel < 1 or sel > len(matches):
+			sel = default_sel
+	except (ValueError, EOFError):
+		sel = default_sel
+	return matches[sel - 1], args[1:]
 
 arguments = sys.argv[1:]
 
-filePath = default_file_path
-if len(arguments) >= 2 and arguments[0] == '--location':
-	filePath = arguments[1]
+saved_path = _read_current_path()
+filePath = saved_path or default_file_path
+while len(arguments) >= 2 and arguments[0] in ("--location", "--task"):
+	if arguments[0] == '--location':
+		filePath = arguments[1]
+	elif arguments[0] == '--task':
+		task_name = arguments[1].strip()
+		safe_task_name = _sanitize_list_name(task_name)
+		filePath = os.path.join(script_dir, "data", "{}.txt".format(safe_task_name))
 	arguments = arguments[2:]
+
+filePath, arguments = _select_list_from_prefix(arguments, filePath)
+
+if filePath != saved_path:
+	_write_current_path(filePath)
 
 todo = TodoService(filePath)
 

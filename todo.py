@@ -220,6 +220,42 @@ def _create_new_list(list_name):
 	print(f"Created new list: {safe_name}")
 	return new_path
 
+def _delete_list(list_name):
+	"""Delete a list."""
+	safe_name = _sanitize_list_name(list_name)
+	list_path = os.path.join(script_dir, "data", f"{safe_name}.txt")
+	
+	if not os.path.exists(list_path):
+		print(f"List '{safe_name}' does not exist.")
+		return False
+	
+	# Prevent deleting the default list if it's the only one
+	if safe_name == DEFAULT_LIST_NAME:
+		# Check if there are other lists
+		data_dir = os.path.join(script_dir, "data")
+		try:
+			if os.path.isdir(data_dir):
+				txt_files = [f for f in os.listdir(data_dir) if f.endswith(".txt") and not f.startswith(".")]
+				if len(txt_files) <= 1:
+					print(f"Cannot delete '{safe_name}': it's the only list.")
+					return False
+		except OSError:
+			pass
+	
+	try:
+		os.remove(list_path)
+		print(f"Deleted list: {safe_name}")
+		
+		# If the deleted list was the current list, switch to default
+		current = _read_current_path()
+		if current == list_path:
+			_write_current_path(default_file_path)
+		
+		return True
+	except OSError as e:
+		print(f"Error deleting list '{safe_name}': {e}")
+		return False
+
 arguments = sys.argv[1:]
 
 # Handle --list-all / -l flag to show all lists
@@ -231,6 +267,11 @@ if len(arguments) > 0 and arguments[0] in ("--list-all", "-l"):
 if len(arguments) >= 2 and arguments[0] == "--new-list":
 	new_list_path = _create_new_list(arguments[1])
 	_write_current_path(new_list_path)
+	sys.exit(0)
+
+# Handle --delete-list flag to delete a list
+if len(arguments) >= 2 and arguments[0] == "--delete-list":
+	_delete_list(arguments[1])
 	sys.exit(0)
 
 saved_path = _read_current_path()

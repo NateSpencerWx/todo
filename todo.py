@@ -118,8 +118,15 @@ default_file_path = os.path.join(script_dir, "data", "tasks.txt")
 arguments = sys.argv[1:]
 
 filePath = default_file_path
-if len(arguments) >= 2 and arguments[0] == '--location':
-	filePath = arguments[1]
+while len(arguments) >= 2 and arguments[0] in ("--location", "--task"):
+	if arguments[0] == '--location':
+		filePath = arguments[1]
+	elif arguments[0] == '--task':
+		task_name = arguments[1].strip()
+		safe_task_name = "".join([c for c in task_name if c.isalnum() or c in ('-', '_')])
+		if safe_task_name == '':
+			safe_task_name = "tasks"
+		filePath = os.path.join(script_dir, "data", "{}.txt".format(safe_task_name))
 	arguments = arguments[2:]
 
 todo = TodoService(filePath)

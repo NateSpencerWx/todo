@@ -157,6 +157,34 @@ def _matching_list_paths(prefix):
 		return []
 	return sorted(matches)
 
+def _print_help():
+	"""Print usage information for todo."""
+	help_text = """todo - A minimalist command line task manager
+
+USAGE:
+    todo                                    List all tasks
+    todo [list_name]                        Switch to a different list
+    todo -[task description]                Add a new task
+    todo -f ID [ID...]                      Finish (remove) one or more tasks
+    todo -e ID [new description]            Edit a task
+    todo help                               Show this help message
+    todo --help                             Show this help message
+    todo -h                                 Show this help message
+
+OPTIONS:
+    --location PATH                         Use a specific file location
+    --task LIST_NAME                        Use a specific list name
+
+EXAMPLES:
+    todo -Buy milk                          Add a task
+    todo -f 1                               Finish task with ID 1
+    todo -f 1 2 3                           Finish tasks with IDs 1, 2, and 3
+    todo -e 2 Buy more milk                 Edit task with ID 2
+    todo groceries                          Switch to 'groceries' list
+    todo --task work -Finish report         Add task to 'work' list
+"""
+	print(help_text)
+
 def _select_list_from_prefix(args, current_path):
 	if len(args) == 0 or args[0].startswith('-'):
 		return current_path, args
@@ -181,6 +209,11 @@ def _select_list_from_prefix(args, current_path):
 	return matches[sel - 1], args[1:]
 
 arguments = sys.argv[1:]
+
+# Check for help command first
+if len(arguments) > 0 and arguments[0] in ('help', '--help', '-h'):
+	_print_help()
+	sys.exit(0)
 
 saved_path = _read_current_path()
 filePath = saved_path or default_file_path

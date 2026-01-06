@@ -167,8 +167,6 @@ def _select_list_from_prefix(args, current_path):
 		return new_path, args[1:]
 	if len(matches) == 1:
 		return matches[0], args[1:]
-	if len(matches) == 0:
-		return current_path, args
 	print("Multiple lists found:")
 	for idx, path in enumerate(matches, 1):
 		print("[{}] {}".format(idx, os.path.basename(path)))

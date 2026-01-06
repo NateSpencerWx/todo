@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-import sqlite3
+import os
 import sys
-import argparse
 import textwrap
-from itertools import chain, repeat
 
 class ASCIITable(object):
 	def __init__(self, headers):
@@ -48,38 +46,79 @@ class ASCIITable(object):
 class TodoService(object):
 	def __init__(self, filePath):
 		self.filePath = filePath
-		self.connection = sqlite3.connect(filePath)
-		self.connection.cursor().execute("CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT)")
+		self.tasks = {}
+		self.next_id = 1
+		self._load()
+
+	def _load(self):
+		"""Load tasks from the .txt file."""
+		if os.path.exists(self.filePath):
+			with open(self.filePath, 'r', encoding='utf-8') as f:
+				for line in f:
+					line = line.strip()
+					if line:
+						parts = line.split('|', 1)
+						if len(parts) == 2:
+							try:
+								task_id = int(parts[0])
+								task = parts[1]
+								self.tasks[task_id] = task
+								if task_id >= self.next_id:
+									self.next_id = task_id + 1
+							except ValueError:
+								pass
+
+	def _save(self):
+		"""Save tasks to the .txt file."""
+		# Ensure the directory exists
+		dir_path = os.path.dirname(self.filePath)
+		if dir_path and not os.path.exists(dir_path):
+			os.makedirs(dir_path)
+		with open(self.filePath, 'w', encoding='utf-8') as f:
+			for task_id in sorted(self.tasks.keys()):
+				f.write("{}|{}\n".format(task_id, self.tasks[task_id]))
 
 	def add_task(self, task):
-		self.connection.cursor().execute("INSERT INTO todos (task) VALUES (?)", (task,))
+		# Sanitize newlines from task text to prevent file format corruption
+		sanitized_task = task.replace('\n', ' ').replace('\r', ' ')
+		self.tasks[self.next_id] = sanitized_task
+		self.next_id += 1
 
-	def remove_tasks(self, id):
-		if len(id) != 0:
-			self.connection.cursor().execute("DELETE FROM todos WHERE id IN ({})".format(','.join(repeat('?', len(id)))), id)
+	def remove_tasks(self, ids):
+		if len(ids) != 0:
+			for task_id in ids:
+				if task_id in self.tasks:
+					del self.tasks[task_id]
 
 	def edit_task(self, id, task):
-		self.connection.cursor().execute("UPDATE todos SET task = ? WHERE id = ?", (task, id))
+		if id in self.tasks:
+			# Sanitize newlines from task text to prevent file format corruption
+			sanitized_task = task.replace('\n', ' ').replace('\r', ' ')
+			self.tasks[id] = sanitized_task
 
 	def print_all_tasks(self):
 		asciiTable = ASCIITable(["ID", "Task"])
-		c = self.connection.cursor()
-		c.execute("SELECT * FROM todos")
-		for row in c:
-			wrapped_task = textwrap.wrap(row[1])
-			asciiTable.add_row([row[0], wrapped_task[0]])
-			for i in range(1, len(wrapped_task)):
-				asciiTable.add_row(['', wrapped_task[i]])
+		for task_id in sorted(self.tasks.keys()):
+			task = self.tasks[task_id]
+			wrapped_task = textwrap.wrap(task)
+			if wrapped_task:
+				asciiTable.add_row([task_id, wrapped_task[0]])
+				for i in range(1, len(wrapped_task)):
+					asciiTable.add_row(['', wrapped_task[i]])
 		print(asciiTable)
 
 	def close(self):
-		self.connection.commit()
-		self.connection.close()
+		self._save()
+
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Default file path: data/tasks.txt in the same directory as the script
+default_file_path = os.path.join(script_dir, "data", "tasks.txt")
 
 arguments = sys.argv[1:]
 
-filePath = "~/tasks.db"
-if arguments[0] == '--location' and len(arguments) >= 2:
+filePath = default_file_path
+if len(arguments) >= 2 and arguments[0] == '--location':
 	filePath = arguments[1]
 	arguments = arguments[2:]
 

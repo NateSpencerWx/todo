@@ -7,7 +7,7 @@ todo
 
 `todo` is a minimalist and simple command line task manager. It aims for those who want to *finish* their tasks, not to organize them.
 
-It is written in `Python 3` and uses `sqlite3` to store your tasks.
+It is written in `Python 3` and stores your tasks in a plain text file.
 
 Why todo?
 ------
@@ -25,11 +25,9 @@ There are various command-line task managers are out there but the there are var
 Installing todo
 ------------
 
-`todo` requires [Python][] 3 or newer, and some form of UNIX-like shell (bash
-works well).  It works on Linux, OS X, and Windows (with [Cygwin][]).
+`todo` requires [Python][] 3 or newer. It works on Linux, OS X, and Windows (including native Windows PowerShell).
 
 [Python]: http://python.org/
-[Cygwin]: http://www.cygwin.com/
 
 Installing and setting up `todo` will not take more than a minute.
 
@@ -38,16 +36,20 @@ First, [download][] the newest version or clone the git repository
 
 [download]: https://github.com/pulkit-singhal/todo/archive/master.zip
 
-Next, decide where you want to keep your todo list. I put mine in `~/tasks.todo`.
+That's it! By default, tasks are stored in `data/tasks.txt` in the same directory as `todo.py`. No environment variables or configuration needed.
 
-Finally, set up an alias to run `todo`.  Put something like this in your
+On Windows PowerShell, you can run it directly:
+
+    python todo.py
+
+On Linux/macOS, you can optionally set up an alias. Put something like this in your
 `~/.bashrc` file:
 
-    alias todo='python ~/path/to/todo.py --location ~/tasks.todo'
-    
+    alias todo='python ~/path/to/todo.py'
+
 If you have both Python 2 and 3 installed you need to explicitly use Python 3
 
-	alias todo='python3 ~/path/to/todo.py --location ~/tasks.todo'
+	alias todo='python3 ~/path/to/todo.py'
 
 Make sure you run `source ~/.bashrc` or restart your terminal window to make
 the alias take effect.
@@ -119,8 +121,8 @@ Sometimes you might want to change the wording of a task.  You can use
 sometimes it's useful to be able to have at least *one* level of organization.
 To split up your tasks into different lists you can add a few more aliases:
 
-    alias tg='python ~/path/to/todo.py --location ~/groceries.todo'
-    alias tw='python ~/path/to/todo.py --location ~/work.todo'
+    alias tg='python ~/path/to/todo.py --location ~/groceries.txt'
+    alias tw='python ~/path/to/todo.py --location ~/work.txt'
 
 ### Distributed Bugtracking
 
@@ -128,7 +130,7 @@ Like the idea of distributed bug trackers, but don't want to use such a heavywei
 
 Add another alias to your `~/.bashrc` file:
 
-    alias bugs='python ~/path/to/todo.py --location ~/bugs.file'
+    alias bugs='python ~/path/to/todo.py --location ~/bugs.txt'
 
 Now when you're in your project directory you can use `bugs` to manage the list of
 bugs/tasks for that project.
